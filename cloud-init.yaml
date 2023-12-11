@@ -1,0 +1,54 @@
+write_files:
+  - content: |
+      overlay
+      br_netfilter
+    path: /etc/modules-load.d/k8s.conf
+  - content: |
+      net.bridge.bridge-nf-call-iptables  = 1
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.ipv4.ip_forward                 = 1
+    path: /etc/sysctl.d/k8s.conf
+  - content: |
+      192.168.56.21  kubemaster01
+      192.168.56.31  kubenode01
+      192.168.56.32  kubenode02
+      192.168.56.33  kubenode03
+    path: /etc/hosts
+    append: true
+  - content: |
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+          SystemdCgroup = true
+    path: /etc/containerd/config.toml
+    
+apt:
+  sources:
+    docker:
+      keyid: '9DC858229FC7DD38854AE2D88D81803C0EBFCD88'
+      keyserver: 'https://download.docker.com/linux/ubuntu/gpg'
+      source: 'deb [signed-by=$KEY_FILE] https://download.docker.com/linux/ubuntu mantic stable'
+    kubernetes:
+      keyid: 'DE15B14486CD377B9E876E1A234654DA9A296436'
+      keyserver: 'https://prod-cdn.packages.k8s.io/repositories/isv:/kubernetes:/core:/stable:/v1.28/deb/Release.key'
+      source: 'deb [signed-by=$KEY_FILE] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /'
+
+package_update: true
+package_upgrade: false
+package_reboot_if_required: true
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gpg
+
+runcmd:
+  - sudo swapoff -a
+  - sudo sed -i -e 's/#DNS=/DNS=8.8.8.8/' /etc/systemd/resolved.conf
+  - sudo service systemd-resolved restart
+  - sudo modprobe overlay
+  - sudo modprobe br_netfilter
+  - sudo apt --option=Dpkg::Options::=--force-confold --option=Dpkg::options::=--force-unsafe-io --assume-yes --quiet update
+  - sudo apt --option=Dpkg::Options::=--force-confold --option=Dpkg::options::=--force-unsafe-io --assume-yes --quiet install nano containerd.io kubelet kubeadm kubectl
+  - sudo apt-mark hold containerd.io kubelet kubeadm kubectl
+  - sudo sysctl --system
