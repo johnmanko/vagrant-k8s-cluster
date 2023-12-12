@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
         # Name shown in the GUI
         node.vm.provider "virtualbox" do |vb|
             vb.name = "kubemaster0#{i}"
-            vb.memory = 2048
+            vb.memory = 3072
             vb.cpus = 2
         end
         node.vm.hostname = "kubemaster0#{i}"
