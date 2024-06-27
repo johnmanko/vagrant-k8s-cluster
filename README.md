@@ -29,6 +29,33 @@ sudo apt install mkisofs
 
 Verify Vagrant is installed:
 ```
+$ vagrant version
+Installed Version: 2.4.1
+Latest Version: 2.4.1
+```
+
+If you receive the following error, you'll need to install `fuse2`.  For modern distros, `fuse3` will be installed.  Please read the [AppImage Fuse docs](https://docs.appimage.org/user-guide/troubleshooting/fuse.html#the-appimage-tells-me-it-needs-fuse-to-run) on how to properly install `fuse2` alongside `fuse3`.
+
+```
+$ vagrant version
+dlopen(): error loading libfuse.so.2
+
+AppImages require FUSE to run. 
+You might still be able to extract the contents of this AppImage 
+if you run it with the --appimage-extract option. 
+See https://github.com/AppImage/AppImageKit/wiki/FUSE 
+for more information
+```
+
+For [Ubuntu (>=22.04)](https://docs.appimage.org/user-guide/troubleshooting/fuse.html#setting-up-fuse-2-x-alongside-of-fuse-3-x-on-recent-ubuntu-22-04-debian-and-their-derivatives):
+
+```
+sudo apt install libfuse2
+```
+
+
+Test from this project's directory:
+```
 vagrant status
 Current machine states:
 
