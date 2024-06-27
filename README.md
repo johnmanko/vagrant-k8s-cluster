@@ -34,7 +34,9 @@ Installed Version: 2.4.1
 Latest Version: 2.4.1
 ```
 
-If you receive the following error, you'll need to install `fuse2`.  For modern distros, `fuse3` will be installed.  Please read the [AppImage Fuse docs](https://docs.appimage.org/user-guide/troubleshooting/fuse.html#the-appimage-tells-me-it-needs-fuse-to-run) on how to properly install `fuse2` alongside `fuse3`.
+If you receive the following error, you'll need to install `fuse2`.  For modern distros, `fuse3` will be installed.  Please read the [AppImage Fuse docs](https://docs.appimage.org/user-guide/troubleshooting/fuse.html#the-appimage-tells-me-it-needs-fuse-to-run) on how to properly install `fuse2` alongside `fuse3`.  
+
+WARNING: Failing to install `fuse2` correctly (ie, installing `fuse`) could result in [this critical bug](https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/1717878) that disables your system!
 
 ```
 $ vagrant version
