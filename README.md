@@ -145,7 +145,16 @@ Therefore, the bridged example (`Vagrantfile-bridge`) assumes you've configured 
 
 See **Cluster Information** above for default MAC addresses.
 
-You can change the MAC prefix in `Vagrantfile-bridge`:
+> [!NOTE]
+> Credit to Jeremy Hutchins for [his script](https://stackoverflow.com/a/58976427/1686575) to dynamically obtain the default interface.
+
+The network interface is defined with `BRIDGE_INTERFACE`:
+
+```
+BRIDGE_INTERFACE = `ip route | awk '/^default/ {printf "%s", $5; exit 0}'`
+```
+
+You can change the MAC prefix:
 
 ```
 MAC = "08AB000000"
