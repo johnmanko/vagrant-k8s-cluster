@@ -227,7 +227,7 @@ echo 'EDITOR=nano' >> ~/.bashrc
 
 Optionally (recommended), update all packages on all VMs (just hit `<enter>` on any popups dialogs that appear).  
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > Don't forget to reboot!
 
 ```
