@@ -1,6 +1,14 @@
 # Cluster Information
 
-The network subnet used for this node cluster is `10.10.10.0/24`.
+The Kubernetes network used for this cluster is `10.10.10.0/24`.
+
+### VM NAT vs BRIDGED
+
+For the VMs, you have the option of using NAT or bridged networking. 
+
+`Vagrantfile` and `cloud-init.yaml` are both configured for NAT routing, which is perfectly fine if running this cluster from a laptop or single-access workstation.  If you want your cluster available network-wide, you should use bridged networking, which is done in `Vagrantfile-bridge`.
+
+The default and expected IPs are (for both NAT and bridged):
 
 | Node | VM Name | hostname | IP |
 | ---- | ---- | --- | --- |
@@ -8,6 +16,15 @@ The network subnet used for this node cluster is `10.10.10.0/24`.
 | node 1 | `kubenode01` | `kubenode01` | `192.168.56.31` |
 | node 2 | `kubenode02` | `kubenode01` | `192.168.56.32` |
 | node 3 | `kubenode03` | `kubenode01` | `192.168.56.33` |
+
+If using a bridged network (see below), the default MACs are:
+
+| Node | VM Name | hostname | MAC |
+| ---- | ---- | --- | --- |
+| master | `kubemaster01` | `kubemaster01` | `08AB00000021` |
+| node 1 | `kubenode01` | `kubenode01` | `08AB00000031` |
+| node 2 | `kubenode02` | `kubenode01` | `08AB00000032` |
+| node 3 | `kubenode03` | `kubenode01` | `08AB00000033` |
 
 # Prerequisites
 
@@ -24,9 +41,9 @@ Vagrant can be install using `brew`:
 brew install vagrant
 ```
 
-## Software Installation
+### Dependencies
 
-Dependencies (Linux):
+For Linux:
 
 ```
 sudo apt install mkisofs
@@ -41,7 +58,8 @@ Latest Version: 2.4.1
 
 If you receive the following error, you'll need to install `fuse2`.  For modern distros, `fuse3` will be installed.  Please read the [AppImage Fuse docs](https://docs.appimage.org/user-guide/troubleshooting/fuse.html#the-appimage-tells-me-it-needs-fuse-to-run) on how to properly install `fuse2` alongside `fuse3`.  
 
-**WARNING: Failing to install `fuse2` correctly (ie, installing `fuse`) could result in [this critical bug](https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/1717878) that disables your system!**
+> [!CAUTION]
+> Failing to install `fuse2` correctly (ie, installing `fuse`) could result in [this critical bug](https://bugs.launchpad.net/ubuntu/+source/gdm3/+bug/1717878) that disables your system!
 
 ```
 $ vagrant version
@@ -60,7 +78,7 @@ For [Ubuntu (>=22.04)](https://docs.appimage.org/user-guide/troubleshooting/fuse
 sudo apt install libfuse2
 ```
 
-Install `scp` plugin:
+Install the Vagrant `scp` plugin:
 
 ```
 vagrant plugin install vagrant-scp
@@ -83,17 +101,11 @@ VM, run `vagrant status NAME`.
 
 # Create and Configure VMs
 
-This cluster is configured to run with one master node and three workers.  If you'd like to change that, update the Vagrantfile and modify `NUM_MASTER_NODE` and/or `NUM_WORKER_NODE`.
+This cluster is configured to run with one master node and three workers.  If you'd like to change that, update `Vagrantfile` and modify `NUM_MASTER_NODE` and/or `NUM_WORKER_NODE`.
 
-## NAT vs BRIDGE
+### NAT 
 
-`Vagrantfile` and `cloud-init.yaml` are both configured to configure the VMs with NAT routing, which is perfectly fine if running your cluster from a laptop or workstation.  If you want your cluster network available, you'll should to use bridge networking, which is done in `Vagrantfile-bridge`.
-
-The basic differences are as followed.
-
-### NAT (local access)
-
-In `Vagrantfile`, VM networking uses predefined IP addresses, with network subnet defined by `IP_NW`:
+In `Vagrantfile`, VM networking uses predefined IP addresses, with a network subnet defined by `IP_NW`:
 
 ```
 IP_NW = "192.168.56."
@@ -113,14 +125,7 @@ NODE_IP_START = 30
 node.vm.network :private_network, ip: IP_NW + "#{NODE_IP_START + i}"
 ```
 
-The number of master and worker nodes are defined by the following:
-
-```
-NUM_MASTER_NODE = 1
-NUM_WORKER_NODE = 3
-```
-
-In addition, `cloud-init.yaml` predefines the list of hostnames/IPs needed to add to each VM's `/etc/hosts` file.  So, if you change any of the configurations above, you need to adjust that file accordingly:
+In addition, `cloud-init.yaml` predefines the list of hostnames/IPs needed to add to each VM's `/etc/hosts` file.  So, if you change any of the configuration above, you need to adjust `cloud-init.yaml` accordingly:
 
 ```
   - content: |
@@ -134,18 +139,11 @@ In addition, `cloud-init.yaml` predefines the list of hostnames/IPs needed to ad
 
 ### Bridged (network access)
 
-Although setting up a bridged network interface could use a manually configured IP, etc, it's easier to use DHCP with staticly assigned  IPs based on pre-defined MAC addresses.  You'll benefit from all that DHCP offers, obtain predicatable address, and may not have to make any changes to `cloud-init.yaml`. 
+Although setting up bridged networking could use manually configured IPs, you could also use DHCP with staticly assigned addresses. 
 
-Therefore, this bridged example we make the assumption that you've configured your DCHP to assigned predictable IPs to the following MAC addresses.
+Therefore, the bridged example (`Vagrantfile-bridge`) assumes you've configured your DCHP server to assign predictable IPs based on the expected IPs and supplied MACs defined in the tables above.
 
-Here is a sample of MAC addresses assigned to the VM devices:
-
-| Node | VM Name | hostname | MAC |
-| ---- | ---- | --- | --- |
-| master | `kubemaster01` | `kubemaster01` | `08AB00000021` |
-| node 1 | `kubenode01` | `kubenode01` | `08AB00000031` |
-| node 2 | `kubenode02` | `kubenode01` | `08AB00000032` |
-| node 3 | `kubenode03` | `kubenode01` | `08AB00000033` |
+See **Cluster Information** above for default MAC addresses.
 
 You can change the MAC prefix in `Vagrantfile-bridge`:
 
@@ -167,12 +165,11 @@ NODE_MAC_START = 30
 node.vm.network "public_network", bridge: "#{BRIDGE_INTERFACE}", :mac=> "#{MAC}#{NODE_MAC_START + i}"
 ```
 
-Lastly, update `cloud-init.yaml` to use the static addresses you configured in DHCP server.
-
+Lastly, update `cloud-init.yaml` to use the static addresses you configured with your DHCP server.
 
 ## Create and start the VMs using vagrant
 
-Not, let's bring up our VMs:
+Now, let's bring up our VMs:
 
 ```
 vagrant up
@@ -228,7 +225,10 @@ export EDITOR=nano
 echo 'EDITOR=nano' >> ~/.bashrc
 ```
 
-Optionally (recommended), update all packages on all VMs (just hit `<enter>` on any popups dialogs that appear).  Don't forget to reboot!:
+Optionally (recommended), update all packages on all VMs (just hit `<enter>` on any popups dialogs that appear).  
+
+> ![IMPORTANT]
+> Don't forget to reboot!
 
 ```
 sudo apt --option=Dpkg::Options::=--force-confold --option=Dpkg::options::=--force-unsafe-io --assume-yes --quiet upgrade
@@ -248,8 +248,6 @@ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address
 Output should look like:
 
 ```
-vagrant@kubemaster01:~$ sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=192.168.56.21
-
 Your Kubernetes control-plane has initialized successfully!
 
 To start using your cluster, you need to run the following as a regular user:
@@ -284,14 +282,19 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 Exit the vm and copy the kubernetes config to your host and workstation.
 
-**WARNING Be sure to not step on your existing kubeconfig!**
+> [!CAUTION]
+> Be sure to not step on your existing kubeconfig!
 
 Verify you don't already have a `~/.kube/config` file:
 ```
 ls ~/.kube/
 ```
 
-If you do, modify the following command to save the copied config to another location.  Otherwise, create the `~/.kube` directory and copy your cluster's config.
+> [!TIP]
+> If you have an existing, modify the following command to save the copied config to another location.
+> Additionally, read [Configure Access to Multiple Clusters](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/) for infomation on merging configs.
+
+Create `~/.kube` and copy your cluster's config.
 
 ```
 mkdir ~/.kube
@@ -357,9 +360,9 @@ cilium version --client
 
 ### Hubble
 
-Hubble is the observability layer of Cilium and can be used to obtain cluster-wide visibility into the network and security layer of your Kubernetes cluster.
-
 Next, install [Hubble](https://docs.cilium.io/en/stable/gettingstarted/hubble_setup/), which is part of the Cilium ecosystem:
+
+> Hubble is the observability layer of Cilium and can be used to obtain cluster-wide visibility into the network and security layer of your Kubernetes cluster.
 
 Enable Hubble:
 
@@ -368,20 +371,23 @@ cilium hubble enable
 cilium hubble enable -ui
 ```
 
-To run the cilium connectivity test, you'll need to enable hubble port-forwarding.  
+To run the cilium's connectivity test, you'll need to enable hubble port-forwarding (running in background `&`).  
 
 ```
 $ cilium hubble port-forward&
 [1] 250053
 ```
 
-Now, install cilium:
+> [!TIP]
+> Don't forget to `fg` your port-forwarding process to `CTRL-C` kill it.
+
+Now, install cilium into your cluster:
 
 ```
 cilium install
 ```
 
-After a  few minutes you can check the status:
+After a few minutes you can check the status:
 
 ```
 $ cilium status
@@ -415,15 +421,15 @@ With everything looking good, run your test:
 cilium connectivity test
 ```
 
-Unless you installed extension like ingress, many tests will be skipped.  If you are following this guide with not extra extensions to your cluster, you should see the test complete with the last line similiar to:
+Unless you installed extensions like ingress, some tests will be skipped.  If you're following this guide to the letter, you should see the test complete with the last line similiar to:
 
 ```
-cilium connectivity test
+✅ [cilium-test] All 48 tests (519 actions) successful, 34 tests skipped, 1 scenarios skipped.
 ```
 
 ## Weave Net (Alternative CNI)
 
-Weave Net is good if you just want networking in your cluster, without any of the extras like service meshes, etc.
+Weave Net is good if you just want networking in your cluster, without any of the extras like service meshes, tracing, node/pod secrutiy, etc.  I recommend this route if you're just learning kubernetes.
 
 See the [new Weave Net](https://rajch.github.io/weave/) for more information.
 
@@ -508,7 +514,6 @@ Verify Weave Net is running:
 ```
 kubectl get pods -A
 ```
-
 
 # Suspend, Resume and Destroy VMs
 
