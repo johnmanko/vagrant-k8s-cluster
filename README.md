@@ -140,7 +140,7 @@ Therefore, this bridged example we make the assumption that you've configured yo
 
 Here is a sample of MAC addresses assigned to the VM devices:
 
-| Node | VM Name | hostname | IP |
+| Node | VM Name | hostname | MAC |
 | ---- | ---- | --- | --- |
 | master | `kubemaster01` | `kubemaster01` | `08AB00000021` |
 | node 1 | `kubenode01` | `kubenode01` | `08AB00000031` |
