@@ -366,7 +366,7 @@ Enable Hubble:
 ```
 cilium hubble enable
 cilium hubble enable -ui
-``
+```
 
 To run the cilium connectivity test, you'll need to enable hubble port-forwarding.  
 
