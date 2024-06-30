@@ -1,0 +1,47 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+NUM_MASTER_NODE = 1
+NUM_WORKER_NODE = 3
+
+MAC = "08AB000000"
+MASTER_MAC_START = 20
+NODE_MAC_START = 30
+
+BRIDGE_INTERFACE = `ip route | awk '/^default/ {printf "%s", $5; exit 0}'`
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "ubuntu/mantic64"
+  config.vm.boot_timeout = 360
+
+  (1..NUM_MASTER_NODE).each do |i|
+      config.vm.define "kubemaster0#{i}" do |node|
+        # Name shown in the GUI
+        node.vm.provider "virtualbox" do |vb|
+            vb.name = "kubemaster0#{i}"
+            vb.memory = 3072
+            vb.cpus = 2
+        end
+        node.vm.hostname = "kubemaster0#{i}"
+        node.vm.network "public_network", bridge: "#{BRIDGE_INTERFACE}", :mac=> "#{MAC}#{MASTER_MAC_START + i}"
+        node.vm.network "forwarded_port", guest: 22, host: "#{2710 + i}"
+        node.vm.cloud_init content_type: "text/cloud-config", path: "./cloud-init.yaml"
+      end
+  end
+
+  # Provision Worker Nodes
+  (1..NUM_WORKER_NODE).each do |i|
+    config.vm.define "kubenode0#{i}" do |node|
+        node.vm.provider "virtualbox" do |vb|
+            vb.name = "kubenode0#{i}"
+            vb.memory = 2048
+            vb.cpus = 2
+        end
+        node.vm.hostname = "kubenode0#{i}"
+        node.vm.network "public_network", bridge: "#{BRIDGE_INTERFACE}", :mac=> "#{MAC}#{NODE_MAC_START + i}"
+        node.vm.network "forwarded_port", guest: 22, host: "#{2720 + i}"
+        node.vm.cloud_init content_type: "text/cloud-config", path: "./cloud-init.yaml"
+    end
+  end
+end
