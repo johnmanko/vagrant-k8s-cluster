@@ -366,6 +366,44 @@ Verify installation:
 ```
 cilium version --client
 ```
+Now, install cilium into your cluster:
+
+```
+cilium install
+```
+
+After a few minutes you can check the status:
+
+```
+$ cilium status
+    /¯¯\
+ /¯¯\__/¯¯\    Cilium:             OK
+ \__/¯¯\__/    Operator:           OK
+ /¯¯\__/¯¯\    Envoy DaemonSet:    disabled (using embedded mode)
+ \__/¯¯\__/    Hubble Relay:       disabled
+    \__/       ClusterMesh:        disabled
+
+Deployment             cilium-operator    Desired: 1, Ready: 1/1, Available: 1/1
+DaemonSet              cilium             Desired: 4, Ready: 4/4, Available: 4/4
+                       cilium             Running: 4
+                       cilium-operator    Running: 1
+Cluster Pods:          5/5 managed by Cilium
+Helm chart version:    
+Image versions         cilium             quay.io/cilium/cilium:v1.15.6@sha256:6aa840986a3a9722cd967ef63248d675a87add7e1704740902d5d3162f0c0def: 4
+                       cilium-operator    quay.io/cilium/operator-generic:v1.15.6@sha256:5789f0935eef96ad571e4f5565a8800d3a8fbb05265cf6909300cd82fd513c3d: 1
+```
+
+With everything looking good, run your test:
+
+```
+cilium connectivity test
+```
+
+Unless you installed extensions like ingress, some tests will be skipped.  If you're following this guide to the letter, you should see the test complete with the last line similiar to:
+
+```
+✅ [cilium-test] All 48 tests (519 actions) successful, 34 tests skipped, 1 scenarios skipped.
+```
 
 ### Hubble
 
@@ -390,51 +428,6 @@ $ cilium hubble port-forward&
 > [!TIP]
 > Don't forget to `fg` your port-forwarding process to `CTRL-C` kill it.
 
-Now, install cilium into your cluster:
-
-```
-cilium install
-```
-
-After a few minutes you can check the status:
-
-```
-$ cilium status
-    /¯¯\
- /¯¯\__/¯¯\    Cilium:             OK
- \__/¯¯\__/    Operator:           OK
- /¯¯\__/¯¯\    Envoy DaemonSet:    disabled (using embedded mode)
- \__/¯¯\__/    Hubble Relay:       OK
-    \__/       ClusterMesh:        disabled
-
-Deployment             cilium-operator    Desired: 1, Ready: 1/1, Available: 1/1
-Deployment             hubble-relay       Desired: 1, Ready: 1/1, Available: 1/1
-Deployment             hubble-ui          Desired: 1, Ready: 1/1, Available: 1/1
-DaemonSet              cilium             Desired: 4, Ready: 4/4, Available: 4/4
-Containers:            hubble-relay       Running: 1
-                       hubble-ui          Running: 1
-                       cilium             Running: 4
-                       cilium-operator    Running: 1
-Cluster Pods:          9/9 managed by Cilium
-Helm chart version:    
-Image versions         cilium             quay.io/cilium/cilium:v1.15.6@sha256:6aa840986a3a9722cd967ef63248d675a87add7e1704740902d5d3162f0c0def: 4
-                       cilium-operator    quay.io/cilium/operator-generic:v1.15.6@sha256:5789f0935eef96ad571e4f5565a8800d3a8fbb05265cf6909300cd82fd513c3d: 1
-                       hubble-relay       quay.io/cilium/hubble-relay:v1.15.6@sha256:a0863dd70d081b273b87b9b7ce7e2d3f99171c2f5e202cd57bc6691e51283e0c: 1
-                       hubble-ui          quay.io/cilium/hubble-ui:v0.13.0@sha256:7d663dc16538dd6e29061abd1047013a645e6e69c115e008bee9ea9fef9a6666: 1
-                       hubble-ui          quay.io/cilium/hubble-ui-backend:v0.13.0@sha256:1e7657d997c5a48253bb8dc91ecee75b63018d16ff5e5797e5af367336bc8803: 1
-```
-
-With everything looking good, run your test:
-
-```
-cilium connectivity test
-```
-
-Unless you installed extensions like ingress, some tests will be skipped.  If you're following this guide to the letter, you should see the test complete with the last line similiar to:
-
-```
-✅ [cilium-test] All 48 tests (519 actions) successful, 34 tests skipped, 1 scenarios skipped.
-```
 
 ## Weave Net (Alternative CNI)
 
