@@ -1,3 +1,5 @@
+![vagrant k8s cluster header image](header.webp "Vagrant Kuberntes Cluster")
+
 # Cluster Information
 
 The Kubernetes network used for this cluster is `10.10.10.0/24`.
